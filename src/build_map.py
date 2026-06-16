@@ -27,6 +27,14 @@ fit_bounds(
 
 add_layer_control(m)
 
+inject_asset(
+    m,
+    ROOT / "src" / "assets" / "trail_info.css",
+)
+inject_asset(
+    m,
+    ROOT / "src" / "assets" / "trail_info.js",
+)
 inject_custom_js(
     m,
     ROOT / "src" / "assets" / "map.js",

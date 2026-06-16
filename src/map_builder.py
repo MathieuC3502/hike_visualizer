@@ -123,3 +123,29 @@ def save_map(m, output_file: Path):
     )
 
     m.save(str(output_file))
+
+
+def inject_asset(m, asset_file):
+
+    code = asset_file.read_text(encoding="utf-8")
+
+    if asset_file.suffix == ".css":
+
+        rendered = f"""
+        <style>
+        {code}
+        </style>
+        """
+
+    elif asset_file.suffix == ".js":
+
+        rendered = f"""
+        <script>
+        {code}
+        </script>
+        """
+
+    else:
+        raise ValueError(f"Unsupported asset type: {asset_file}")
+
+    m.get_root().html.add_child(Element(rendered))

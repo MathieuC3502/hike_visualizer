@@ -112,8 +112,49 @@ function initializeMap(map, deptBounds) {
 
 
     // ----------------------------
-    // 4. Reset control
+    // 4. Controls
     // ----------------------------
+
+    var TrailInfoControl = L.Control.extend({
+        options: {
+            position: "topleft"
+        },
+
+        onAdd: function () {
+
+            var container = L.DomUtil.create(
+                "div",
+                "leaflet-bar leaflet-control"
+            );
+
+            var btn = L.DomUtil.create(
+                "a",
+                "",
+                container
+            );
+
+            btn.innerHTML = "📈";
+            btn.title = "Trail information";
+            btn.href = "#";
+
+            L.DomEvent.on(
+                btn,
+                "click",
+                function (e) {
+
+                    console.log("📈 clicked");
+
+                    L.DomEvent.stopPropagation(e);
+                    L.DomEvent.preventDefault(e);
+
+                    openTrailSelector();
+
+                }
+            );
+
+            return container;
+        }
+    });
 
     var ResetControl = L.Control.extend({
 
@@ -174,8 +215,9 @@ function initializeMap(map, deptBounds) {
         // Step 3: attach controls
         try {
             map.addControl(new ResetControl());
+            map.addControl(new TrailInfoControl());
         } catch (e) {
-            console.error("ResetControl failed", e);
+            console.error("Adding controls failed", e);
 }
 
     });

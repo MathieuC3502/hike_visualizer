@@ -41,6 +41,7 @@ def load_trails(trails_root: Path):
             continue
 
         gdf = gpd.read_file(shp_files[0])
+        gdf["trail_name"] = trail_dir.name
 
         if gdf.empty:
             continue
@@ -54,14 +55,15 @@ def load_trails(trails_root: Path):
             show=True,
         )
 
-        folium.GeoJson(
+        trail_geojson = folium.GeoJson(
             gdf,
             style_function=lambda _, c=color: {
                 "color": c,
                 "weight": 4,
             },
             tooltip=trail_dir.name,
-        ).add_to(layer)
+        )
+        trail_geojson.add_to(layer)
 
         layers.append(layer)
 
