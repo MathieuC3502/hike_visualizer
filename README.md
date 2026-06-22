@@ -26,7 +26,9 @@ Les randonnées et points d'intérêts présents sur la carte ont été ajoutés
 
 Le fichiers *./docs/index.html* sera alors mis à jour et exploitable
 
-## Problèmes actuels
+## Problèmes/tâches actuels
+
+- Amélioration future : Implémenter un filtre de Savitzky-Golay pour éliminer les outliers et le bruit trop important des profils d'altitude
 - Les .shp en entrée doivent contenir une seule ligne. S'ils en contiennent plusieurs, aucun merge n'est fait. Les tentatives de merge avec "union" causent des problèmes car elles suppriment les allez/retour sur le même chemin, ou rangent les segments dans le mauvais ordre, causant des "sauts" non naturels de l'un à l'autre. La "solution" actuelle est de redessiner proprement les paths à la main dans QGIS, mais cela est peu pratique. (Actuellement tous les chemins sont tracés à la main dans QGIS. Mais si l'on trace le chemin en plusieurs segments puis qu'on les merge, on tombe dans le même problème !). Il faut travailler la pipeline tracé-merge pour s'assurer de la cohérence/qualité des tracés --> Voir fichier ./src/preprocess/build_elevation_profiles.py
 - Il faut ajouter les informations de la rando dans le cadre prévu à cet effet (distance totale et dénivelés peuvent surement etre calculés à partir des infos déjà disponible, la description et le nom formatté seront peut-être à ajouter manuellement) --> Voir fichier ./src/assets/trail_info.js
 - La gestion des données, le stockage, le rangement etc... N'est pas travaillé, correct ou "propre", à étudier 
