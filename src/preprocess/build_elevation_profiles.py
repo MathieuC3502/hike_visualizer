@@ -73,7 +73,12 @@ def build_elevation_profile(
 
     gdf_metric = gdf_original.to_crs(metric_crs)
 
-    line_metric = gdf_metric.geometry.union_all()
+    geom = gdf_metric.geometry.iloc[0]
+
+    if geom.geom_type != "LineString":
+        raise ValueError(f"Expected LineString, got {geom.geom_type}")
+
+    line_metric = geom
 
     # -------------------------
     # Resample every 10 m
