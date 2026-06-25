@@ -6,17 +6,14 @@ sys.path.append(str(Path(__file__).parent.parent))
 from config import DEM_PATH
 import json
 import geopandas as gpd
+import numpy as np
 import rasterio
+from scipy.ndimage import median_filter
+from scipy.signal import savgol_filter
 from shapely.geometry import LineString
 
 
 def resample_line(line: LineString, step_m: float = 10.0):
-    """
-    Returns:
-        distances: [0, 10, 20, ...]
-        points: shapely Points
-    """
-
     length = line.length
 
     distances = list(range(0, int(length), int(step_m)))
@@ -29,6 +26,46 @@ def resample_line(line: LineString, step_m: float = 10.0):
     return distances, points
 
 
+def smooth_elevations(
+    elevations,
+    median_size: int = 3,
+    window_length: int = 9,
+    polyorder: int = 2,
+):
+    """
+    Smooth elevation profile while preserving climbs.
+
+    1. Median filter removes isolated DEM spikes.
+    2. Savitzky-Golay performs a light smoothing.
+    """
+
+    z = np.asarray(elevations, dtype=float)
+
+    if len(z) < 5:
+        return z.tolist()
+
+    # Remove isolated spikes
+    z = median_filter(z, size=median_size)
+
+    # Window must be odd and <= profile length
+    window = min(window_length, len(z))
+
+    if window % 2 == 0:
+        window -= 1
+
+    if window <= polyorder:
+        return z.tolist()
+
+    z = savgol_filter(
+        z,
+        window_length=window,
+        polyorder=polyorder,
+        mode="interp",
+    )
+
+    return z.tolist()
+
+
 def build_elevation_profile(
     trail_dir: Path,
     step_m: float = 10.0,
@@ -36,10 +73,11 @@ def build_elevation_profile(
     """
     Creates:
 
-        trail_dir/profile.json
+        docs/profiles/<trail>.json
 
     from the trail shapefile and DEM.
     """
+
     trail_dir = Path(trail_dir)
     trail_name = trail_dir.name
 
@@ -51,7 +89,7 @@ def build_elevation_profile(
     shp_path = shp_files[0]
 
     # -------------------------
-    # Load original geometry
+    # Load geometry
     # -------------------------
 
     gdf_original = gpd.read_file(shp_path)
@@ -62,11 +100,8 @@ def build_elevation_profile(
     if gdf_original.crs is None:
         raise ValueError(f"No CRS defined for {shp_path}")
 
-    # Merge all geometries into one line
-    line_original = gdf_original.geometry.union_all()
-
     # -------------------------
-    # Project for metric distances
+    # Project to metric CRS
     # -------------------------
 
     metric_crs = 2154  # Lambert-93
@@ -81,7 +116,7 @@ def build_elevation_profile(
     line_metric = geom
 
     # -------------------------
-    # Resample every 10 m
+    # Resample every step_m
     # -------------------------
 
     distances_m, metric_points = resample_line(
@@ -90,8 +125,7 @@ def build_elevation_profile(
     )
 
     # -------------------------
-    # Convert sampled points
-    # back to WGS84
+    # Convert sampled points to WGS84
     # -------------------------
 
     points_metric_gdf = gpd.GeoDataFrame(
@@ -116,6 +150,17 @@ def build_elevation_profile(
         elevations = [float(v[0]) for v in dem.sample(dem_coords)]
 
     # -------------------------
+    # Smooth elevations
+    # -------------------------
+
+    elevations = smooth_elevations(
+        elevations,
+        median_size=3,
+        window_length=9,
+        polyorder=2,
+    )
+
+    # -------------------------
     # Build JSON
     # -------------------------
 
@@ -138,7 +183,8 @@ def build_elevation_profile(
         )
 
     output_dir = Path("docs/profiles")
-    output_dir.mkdir(parents=True, exist_ok=True)  # Ensure the directory exists
+    output_dir.mkdir(parents=True, exist_ok=True)
+
     output_path = output_dir / f"{trail_name}.json"
 
     with open(
