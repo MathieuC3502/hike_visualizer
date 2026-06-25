@@ -13,6 +13,51 @@ from scipy.signal import savgol_filter
 from shapely.geometry import LineString
 
 
+def remove_dem_spikes(
+    elevations,
+    step_m=10.0,
+    max_grade=1.0,
+):
+    """
+    Remove narrow DEM artifacts (cliffs, bridges, tunnels).
+
+    Detects:
+        steep climb -> steep descent
+    or
+        steep descent -> steep climb
+
+    and replaces the spike by interpolation.
+    """
+
+    z = np.asarray(elevations, dtype=float).copy()
+
+    if len(z) < 4:
+        return z.tolist()
+
+    max_dz = max_grade * step_m
+
+    i = 1
+
+    while i < len(z) - 2:
+
+        dz1 = z[i] - z[i - 1]
+        dz2 = z[i + 1] - z[i]
+
+        opposite = np.sign(dz1) != np.sign(dz2)
+
+        steep = abs(dz1) > max_dz and abs(dz2) > max_dz
+
+        if opposite and steep:
+            z[i] = 0.5 * (z[i - 1] + z[i + 1])
+
+            i += 2
+            continue
+
+        i += 1
+
+    return z.tolist()
+
+
 def resample_line(line: LineString, step_m: float = 10.0):
     length = line.length
 
@@ -152,6 +197,12 @@ def build_elevation_profile(
     # -------------------------
     # Smooth elevations
     # -------------------------
+
+    elevations = remove_dem_spikes(
+        elevations,
+        step_m=step_m,
+        max_grade=1.0,
+    )
 
     elevations = smooth_elevations(
         elevations,
