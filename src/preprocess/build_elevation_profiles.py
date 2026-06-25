@@ -17,21 +17,23 @@ def remove_dem_spikes(
     elevations,
     step_m=10.0,
     max_grade=1.0,
+    max_width=6,
+    return_tol=8.0,
 ):
     """
-    Remove narrow DEM artifacts (cliffs, bridges, tunnels).
+    Remove short excursions produced by DEM cliffs.
 
     Detects:
-        steep climb -> steep descent
+        steep up ... steep down
     or
-        steep descent -> steep climb
+        steep down ... steep up
 
-    and replaces the spike by interpolation.
+    where the profile returns close to its initial elevation.
     """
 
     z = np.asarray(elevations, dtype=float).copy()
 
-    if len(z) < 4:
+    if len(z) < 6:
         return z.tolist()
 
     max_dz = max_grade * step_m
@@ -40,20 +42,38 @@ def remove_dem_spikes(
 
     while i < len(z) - 2:
 
-        dz1 = z[i] - z[i - 1]
-        dz2 = z[i + 1] - z[i]
+        first_jump = z[i] - z[i - 1]
 
-        opposite = np.sign(dz1) != np.sign(dz2)
-
-        steep = abs(dz1) > max_dz and abs(dz2) > max_dz
-
-        if opposite and steep:
-            z[i] = 0.5 * (z[i - 1] + z[i + 1])
-
-            i += 2
+        if abs(first_jump) < max_dz:
+            i += 1
             continue
 
-        i += 1
+        sign = np.sign(first_jump)
+
+        found = False
+
+        for j in range(i + 1, min(i + max_width, len(z) - 1)):
+
+            second_jump = z[j] - z[j - 1]
+
+            if (
+                np.sign(second_jump) == -sign
+                and abs(second_jump) > max_dz
+                and abs(z[j] - z[i - 1]) < return_tol
+            ):
+
+                z[i : j + 1] = np.linspace(
+                    z[i - 1],
+                    z[j],
+                    j - i + 1,
+                )
+
+                i = j
+                found = True
+                break
+
+        if not found:
+            i += 1
 
     return z.tolist()
 
