@@ -95,3 +95,17 @@
     display: flex;
     gap: 10px;
 }
+
+.download-trail-button {
+    padding: 10px 16px;
+    border: none;
+    border-radius: 6px;
+    background: #1565c0;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.download-trail-button:hover {
+    background: #0d47a1;
+}

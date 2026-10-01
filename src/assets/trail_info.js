@@ -100,13 +100,23 @@ async function openTrailModal(trailName) {
         ).innerHTML = `
             <h2>${trailName}</h2>
 
+            <div class="trail-details">
             <p>
-                Trail details will be added later
+                Trail details will be added later.
             </p>
 
-            <button id="download-trail-btn">
-                Download trail
-            </button>
+            <p class="download-description">
+                Download this trail as a GPX file to use it on your smartphone.
+                You can open the file with OSM-based navigation apps and other
+                apps that support GPX tracks.
+            </p>
+        </div>
+
+        <button
+            id="download-trail-btn"
+            class="download-trail-button">
+            Download trail (.GPX)
+        </button>
         `;
 
         document
