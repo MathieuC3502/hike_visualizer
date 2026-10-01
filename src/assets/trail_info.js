@@ -241,7 +241,8 @@ function buildElevationProfile(profile) {
         1
     );
 
-    const minZ = Math.min(...profile.points.map(p => p.z));
+    const minZ = 0;
+    // const minZ = Math.min(...profile.points.map(p => p.z));
     const maxZ = Math.max(...profile.points.map(p => p.z));
 
     const elevationRange = Math.max(maxZ - minZ, 1);
