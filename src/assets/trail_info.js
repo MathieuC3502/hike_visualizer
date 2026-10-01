@@ -99,10 +99,28 @@ async function openTrailModal(trailName) {
             ".trail-left"
         ).innerHTML = `
             <h2>${trailName}</h2>
+
             <p>
-                $Trail details will be added later
+                Trail details will be added later
             </p>
+
+            <button id="download-trail-btn">
+                Download trail
+            </button>
         `;
+
+        document
+            .getElementById("download-trail-btn")
+            .addEventListener(
+                "click",
+                () => {
+                    downloadTrailGPX(
+                        profile,
+                        trailName
+                    );
+                }
+            );
+
 
     } catch (err) {
 
@@ -690,6 +708,87 @@ function setTrailURL(trailName) {
     );
 }
 
+function createGPX(profile, trailName) {
+
+    const escapeXML = (text) => {
+        return String(text)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&apos;");
+    };
+
+    const trackPoints = profile.points.map(point => {
+
+        return `
+            <trkpt
+                lat="${point.lat}"
+                lon="${point.lon}">
+                <ele>${point.z}</ele>
+            </trkpt>`;
+    }).join("");
+
+    const gpx = `<?xml version="1.0" encoding="UTF-8"?>
+<gpx
+    version="1.1"
+    creator="Trail Map"
+    xmlns="http://www.topografix.com/GPX/1/1"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+        http://www.topografix.com/GPX/1/1
+        http://www.topografix.com/GPX/1/1/gpx.xsd">
+
+    <metadata>
+        <name>${escapeXML(trailName)}</name>
+    </metadata>
+
+    <trk>
+        <name>${escapeXML(trailName)}</name>
+
+        <trkseg>
+            ${trackPoints}
+        </trkseg>
+
+    </trk>
+
+</gpx>`;
+
+    return gpx;
+}
+
+function downloadTrailGPX(profile, trailName) {
+
+    const gpx =
+        createGPX(profile, trailName);
+
+    const blob =
+        new Blob(
+            [gpx],
+            {
+                type: "application/gpx+xml"
+            }
+        );
+
+    const url =
+        URL.createObjectURL(blob);
+
+    const link =
+        document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        `${trailName}.gpx`;
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+}
 
 window.addEventListener(
     "DOMContentLoaded",
