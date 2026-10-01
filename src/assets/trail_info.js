@@ -42,16 +42,34 @@ function createTrailModal() {
     document
         .getElementById("close-trail-modal")
         .addEventListener("click", () => {
+
             modal.style.display = "none";
+
+            // Remove the trail from the URL
+            history.pushState(
+                "",
+                document.title,
+                window.location.pathname +
+                window.location.search
+            );
         });
 
     modal.addEventListener("click", (e) => {
 
-    if (e.target === modal) {
-        modal.style.display = "none";
-    }
+        if (e.target === modal) {
 
-});
+            modal.style.display = "none";
+
+            // Remove the trail from the URL
+            history.pushState(
+                "",
+                document.title,
+                window.location.pathname +
+                window.location.search
+            );
+        }
+
+    });
 }
 
 async function openTrailModal(trailName) {
@@ -610,9 +628,74 @@ async function openTrailSelector() {
 
                 choice.remove();
 
-                openTrailModal(
-                    trail
-                );
+                openTrailModal(trail);
+                setTrailURL(trail);
             }
         );
 }
+
+async function openTrailFromURL() {
+
+    const hash = window.location.hash;
+
+    if (!hash) {
+        return;
+    }
+
+    const trailName =
+        decodeURIComponent(
+            hash.substring(1)
+        );
+
+    if (!trailName) {
+        return;
+    }
+
+    try {
+
+        const response =
+            await fetch("trails.json");
+
+        const trails =
+            await response.json();
+
+        if (!trails.includes(trailName)) {
+
+            console.warn(
+                "Unknown trail:",
+                trailName
+            );
+
+            return;
+        }
+
+        openTrailModal(trailName);
+
+    } catch (err) {
+
+        console.error(
+            "Unable to load trails.json",
+            err
+        );
+    }
+}
+
+function setTrailURL(trailName) {
+
+    history.pushState(
+        null,
+        "",
+        "#" + encodeURIComponent(trailName)
+    );
+}
+
+
+window.addEventListener(
+    "DOMContentLoaded",
+    openTrailFromURL
+);
+
+window.addEventListener(
+    "hashchange",
+    openTrailFromURL
+);
