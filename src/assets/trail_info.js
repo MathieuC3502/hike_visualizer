@@ -100,7 +100,7 @@ async function openTrailModal(trailName) {
         ).innerHTML = `
             <h2>${trailName}</h2>
             <p>
-                ${profile.points.length} points
+                $Trail details will be added later
             </p>
         `;
 
